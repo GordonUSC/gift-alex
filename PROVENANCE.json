@@ -1,0 +1,22 @@
+{
+ "img/hero.jpg": {
+  "tool": "higgsfield",
+  "prompt": "neon cocktail bar counter (job f62ceb41) gpt_image_2_5"
+ },
+ "snd/pour.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "liqueur pour into tall glass (flow bX2H09497IjBrndYnMmJ)"
+ },
+ "snd/clink.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "two cocktail glasses clinking (flow bX2H09497IjBrndYnMmJ)"
+ },
+ "snd/bar.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "cocktail bar ambience loop (flow bX2H09497IjBrndYnMmJ)"
+ },
+ "snd/neon.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "neon sign flickering on (flow bX2H09497IjBrndYnMmJ)"
+ }
+}

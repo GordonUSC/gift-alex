@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neon Toast</title>
+<meta name="description" content="A rainbow pour for Alex.">
+<meta property="og:title" content="Neon Toast, for Alex">
+<meta property="og:image" content="https://gordonusc.github.io/gift-alex/img/hero.jpg">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Monoton&family=Manrope:wght@500;700;800&display=swap">
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0a0710;color:#fff;font:16px/1.4 Manrope,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.stage{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,calc(100svh*9/16));overflow:hidden}
+.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.7)}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.neon{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 7%);text-align:center;font:400 clamp(30px,10vw,50px)/1.1 Monoton,sans-serif;color:#ff6ec7;text-shadow:0 0 6px #fff,0 0 18px #ff2fb3,0 0 40px #ff2fb3;opacity:.12;transition:opacity .1s;padding:0 12px}
+.neon.on{opacity:1}
+.sub{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 7% + 120px);text-align:center;padding:0 22px;font-size:16px;opacity:0;transition:opacity .8s}
+.sub.on{opacity:1}
+.hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);text-align:center;font-weight:800;letter-spacing:.22em;font-size:13px;text-shadow:0 2px 8px #000}
+.again{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 30px);font:800 14px Manrope,sans-serif;letter-spacing:.18em;padding:11px 20px;border-radius:999px;border:2px solid #ff6ec7;background:#0008;color:#fff;cursor:pointer;display:none}
+.foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);text-align:center;font-size:11px;opacity:.6}
+</style>
+</head>
+<body>
+<div class="stage">
+  <img class="bg" src="img/hero.jpg" alt="A neon-lit cocktail bar at night">
+  <canvas id="c"></canvas>
+  <div class="neon" id="neon">THANK YOU ALEX</div>
+  <div class="sub" id="sub">For every cheers you've poured, every room you've lit up, and every student you've led. Gordon raises a glass to you.</div>
+  <div class="hint" id="hint">TAP TO POUR A LAYER</div>
+  <button class="again" id="again">POUR ANOTHER</button>
+  <div class="foot">made by Darby, Gordon's AI assistant, with love from Gordon</div>
+</div>
+<script>
+// ElevenLabs sound design: pour, cheers clink, neon buzz, bar ambience. Code only mixes.
+let ac=null, master=null, bufs={}, amb=null;
+function audio(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=.9; master.connect(ac.destination); ['pour','clink','neon','bar'].forEach(load);}catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
+async function load(n){ if(bufs[n]) return bufs[n]; try{ const r=await fetch('snd/'+n+'.mp3'); const a=await r.arrayBuffer(); bufs[n]=await new Promise((ok,no)=>ac.decodeAudioData(a,ok,no)); }catch(e){} return bufs[n]; }
+async function play(n,vol=1,isLoop=false,rate=1){ if(!audio()) return null; const b=await load(n); if(!b) return null; const s=ac.createBufferSource(), g=ac.createGain(); s.buffer=b; s.loop=isLoop; s.playbackRate.value=rate; g.gain.value=vol; s.connect(g).connect(master); s.start(); return {s,g}; }
+const c=document.getElementById('c'), x=c.getContext('2d'), D=Math.min(devicePixelRatio||1,2);
+function size(){ c.width=c.clientWidth*D; c.height=c.clientHeight*D; } size(); addEventListener('resize',size);
+const COLORS=['#e40303','#ff8c00','#ffed00','#008026','#24408e','#732982'];
+let layers=[], pouring=null, done=false, bubbles=[];
+function glass(){ const w=c.width, h=c.height; return {x:w*.662, y:h*.415, w:w*.14, h:h*.305}; }
+function pour(){ if(done||pouring) return; audio(); if(!amb) play('bar',.4,true).then(h=>amb=h); const i=layers.length; pouring={i,t:0}; play('pour',.85,false,1+(i%3)*.04); }
+c.addEventListener('pointerdown',pour);
+function finish(){ done=true; document.getElementById('hint').style.display='none'; play('neon',.8); const n=document.getElementById('neon'); let f=0; const iv=setInterval(()=>{ n.classList.toggle('on'); if(++f>6){ clearInterval(iv); n.classList.add('on'); play('clink',1); document.getElementById('sub').classList.add('on'); document.getElementById('again').style.display='block'; } },110); }
+document.getElementById('again').onclick=()=>{ layers=[]; done=false; document.getElementById('neon').classList.remove('on'); document.getElementById('sub').classList.remove('on'); document.getElementById('again').style.display='none'; document.getElementById('hint').style.display='block'; };
+(function loop(){ const G=glass(); x.clearRect(0,0,c.width,c.height); const lh=G.h/COLORS.length;
+  layers.forEach((col,i)=>{ x.fillStyle=col; x.globalAlpha=.88; x.fillRect(G.x+3*D,G.y+G.h-(i+1)*lh,G.w-6*D,lh+1); });
+  if(pouring){ pouring.t+=.03; const k=Math.min(pouring.t,1); x.globalAlpha=.9; x.fillStyle=COLORS[pouring.i]; x.fillRect(G.x+G.w/2-4*D,0,8*D,G.y+G.h-pouring.i*lh); x.fillRect(G.x+3*D,G.y+G.h-(pouring.i+k)*lh,G.w-6*D,lh*k+1);
+    if(Math.random()<.5) bubbles.push({x:G.x+10*D+Math.random()*(G.w-20*D),y:G.y+G.h-pouring.i*lh,a:1});
+    if(pouring.t>=1){ layers.push(COLORS[pouring.i]); pouring=null; if(layers.length===COLORS.length) finish(); } }
+  x.globalAlpha=1; bubbles.forEach(b=>{ b.y-=1.2*D; b.a-=.015; x.strokeStyle=`rgba(255,255,255,${Math.max(b.a,0)*.7})`; x.beginPath(); x.arc(b.x,b.y,2*D,0,7); x.stroke(); }); bubbles=bubbles.filter(b=>b.a>0&&b.y>G.y);
+  
+  x.fillStyle='rgba(255,255,255,.08)'; x.fillRect(G.x+8*D,G.y+6*D,10*D,G.h-12*D);
+  if(done){ x.globalAlpha=.25+.15*Math.sin(performance.now()/300); x.fillStyle='#ff6ec7'; x.beginPath(); x.ellipse(G.x+G.w/2,G.y+G.h+10*D,G.w,14*D,0,0,7); x.fill(); x.globalAlpha=1; }
+  requestAnimationFrame(loop); })();
+</script>
+</body>
+</html>
